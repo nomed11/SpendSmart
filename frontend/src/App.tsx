@@ -20,7 +20,7 @@ function App() {
     <Route path="/dashboard" element={<Dashboard />} />
     <Route path="/approval" element={<ApprovalInterface />} />
     </Route>
-    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
     </div>
     </main>
