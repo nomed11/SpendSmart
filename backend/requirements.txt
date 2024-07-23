@@ -1,0 +1,9 @@
+flask
+flask-cors
+python-dotenv
+requests
+flask-sqlalchemy
+pyjwt
+slackclient
+pandas
+scikit-learn
