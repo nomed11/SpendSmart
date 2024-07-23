@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from models import db, SpendRequest, User
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.exc import IntegrityError
 import jwt
 from functools import wraps
 import datetime
@@ -16,7 +17,7 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spendsmart.db'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 db.init_app(app)
@@ -36,6 +37,7 @@ def token_required(f):
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
         try:
+            token = token.split(' ')[1] if token.startswith('Bearer ') else token
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user = User.query.filter_by(id=data['user_id']).first()
         except:
@@ -72,12 +74,27 @@ def train_model():
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    data = request.json
-    hashed_password = generate_password_hash(data['password'], method='sha256')
-    new_user = User(username=data['username'], password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({'message': 'User created successfully'}), 201
+    try:
+        data = request.json
+        if not data or 'username' not in data or 'password' not in data:
+            return jsonify({'error': 'Invalid request data'}), 400
+        
+        existing_user = User.query.filter_by(username=data['username']).first()
+        if existing_user:
+            return jsonify({'error': 'Username already exists'}), 409
+        
+        hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
+        new_user = User(username=data['username'], password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'User created successfully'}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Username already exists'}), 409
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in register: {str(e)}")
+        return jsonify({'error': 'An error occurred during registration'}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -113,7 +130,7 @@ def handle_requests(current_user):
         except Exception as e:
             return jsonify({"error": str(e)}), 400
     else:
-        requests = SpendRequest.query.filter_by(user_id=current_user.id).all()
+        requests = SpendRequest.query.all()
         return jsonify([r.to_dict() for r in requests])
 
 @app.route('/api/requests/<int:request_id>', methods=['PUT'])

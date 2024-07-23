@@ -24,5 +24,6 @@ class SpendRequest(db.Model):
             'cost': self.cost,
             'reason': self.reason,
             'status': self.status,
+            'user_id': self.user_id,
             'created_at': self.created_at.isoformat()
         }
