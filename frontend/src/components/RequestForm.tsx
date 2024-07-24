@@ -21,31 +21,10 @@
 //     const [error, setError] = useState('');
 //     const [suggestion, setSuggestion] = useState<string | null>(null);
 
-//     // const handleSubmit = async (e: React.FormEvent) => {
-//     //     e.preventDefault();
-//     //     setMessage('');
-//     //     setError('');
-//     //     try {
-//     //         const token = localStorage.getItem('token');
-//     //         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-//     //         await axios.post(
-//     //             `${apiUrl}/api/requests`,
-//     //             { item, cost: parseFloat(cost), reason },
-//     //             { headers: { Authorization: `Bearer ${token}` } }
-//     //         );
-//     //         setMessage('Request submitted successfully');
-//     //         onNewRequest({ item, cost: parseFloat(cost), reason });
-//     //         setItem('');
-//     //         setCost('');
-//     //         setReason('');
-//     //     } catch (error) {
-//     //         console.error('Failed to submit request:', error);
-//     //         setError('Failed to submit request. Please try again.');
-//     //     }
-//     // };
-
 //     const handleSubmit = async (e: React.FormEvent) => {
 //         e.preventDefault();
+//         setMessage('');
+//         setError('');
 //         try {
 //             const token = localStorage.getItem('token');
 //             const response = await axios.post(
@@ -53,6 +32,7 @@
 //                 { item, cost: parseFloat(cost), reason },
 //                 { headers: { Authorization: `Bearer ${token}` } }
 //             );
+//             setMessage('Request submitted successfully');
 //             onNewRequest(response.data);
 //             setItem('');
 //             setCost('');
@@ -60,11 +40,16 @@
 //             setSuggestion(null);
 //         } catch (error) {
 //             console.error('Failed to submit request:', error);
+//             setError('Failed to submit request. Please try again.');
 //         }
 //     };
 
 //     const handleSuggestApproval = async () => {
 //         try {
+//             if (!cost) {
+//                 setSuggestion('Please enter a cost before requesting a suggestion.');
+//                 return;
+//             }
 //             const token = localStorage.getItem('token');
 //             const response = await axios.post(
 //                 `${import.meta.env.VITE_API_URL}/api/requests/suggest-approval`,
@@ -74,6 +59,7 @@
 //             setSuggestion(response.data.suggested_approval ? 'Approval suggested' : 'Rejection suggested');
 //         } catch (error) {
 //             console.error('Failed to get suggestion:', error);
+//             setSuggestion('Failed to get suggestion. Please try again.');
 //         }
 //     };
 
@@ -149,7 +135,7 @@ interface Request {
 }
 
 interface RequestFormProps {
-    onNewRequest: (request: Request) => void;
+    onNewRequest: (request: Request) => Promise<void>;
 }
 
 const RequestForm: React.FC<RequestFormProps> = ({ onNewRequest }) => {
@@ -165,14 +151,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onNewRequest }) => {
         setMessage('');
         setError('');
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/requests`,
-                { item, cost: parseFloat(cost), reason },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const newRequest = { item, cost: parseFloat(cost), reason };
+            await onNewRequest(newRequest as Request);
             setMessage('Request submitted successfully');
-            onNewRequest(response.data);
             setItem('');
             setCost('');
             setReason('');
@@ -184,11 +165,11 @@ const RequestForm: React.FC<RequestFormProps> = ({ onNewRequest }) => {
     };
     
     const handleSuggestApproval = async () => {
-        if (!cost) {
-            setError('Please enter a cost before requesting a suggestion.');
-            return;
-        }
         try {
+            if (!cost) {
+                setSuggestion('Please enter a cost before requesting a suggestion.');
+                return;
+            }
             const token = localStorage.getItem('token');
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/requests/suggest-approval`,
@@ -196,10 +177,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onNewRequest }) => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setSuggestion(response.data.suggested_approval ? 'Approval suggested' : 'Rejection suggested');
-            setError('');
         } catch (error) {
             console.error('Failed to get suggestion:', error);
-            setError('Failed to get suggestion. Please try again.');
+            setSuggestion('Failed to get suggestion. Please try again.');
         }
     };
     

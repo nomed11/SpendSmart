@@ -6,8 +6,8 @@ from sqlalchemy.exc import IntegrityError
 import jwt
 from functools import wraps
 import datetime
-from slack import WebClient
-from slack.errors import SlackApiError
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -47,10 +47,12 @@ def token_required(f):
 
 def send_slack_notification(message):
     try:
+        print(f"Attempting to send Slack notification: {message}")  # Debug print
         response = slack_client.chat_postMessage(
             channel="#spend-requests",
             text=message
         )
+        print(f"Slack notification sent successfully: {response}")  # Debug print
     except SlackApiError as e:
         print(f"Error sending Slack message: {e}")
 
@@ -167,7 +169,8 @@ def suggest_approval(current_user):
 @app.route('/api/dashboard/spend-by-category', methods=['GET'])
 @token_required
 def spend_by_category(current_user):
-    requests = SpendRequest.query.filter_by(user_id=current_user.id).all()
+    status = request.args.get('status', 'approved')
+    requests = SpendRequest.query.filter_by(user_id=current_user.id, status=status).all()
     categories = {}
     for r in requests:
         if r.item not in categories:
@@ -178,7 +181,8 @@ def spend_by_category(current_user):
 @app.route('/api/dashboard/spend-over-time', methods=['GET'])
 @token_required
 def spend_over_time(current_user):
-    requests = SpendRequest.query.filter_by(user_id=current_user.id).order_by(SpendRequest.created_at).all()
+    status = request.args.get('status', 'approved')
+    requests = SpendRequest.query.filter_by(user_id=current_user.id, status=status).order_by(SpendRequest.created_at).all()
     data = [{'date': r.created_at.strftime('%Y-%m-%d'), 'amount': r.cost} for r in requests]
     return jsonify(data)
 
