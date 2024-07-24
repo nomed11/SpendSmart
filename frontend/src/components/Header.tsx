@@ -10,9 +10,9 @@ const Header: React.FC = () => {
     };
     
     return (
-        <header className="bg-white shadow">
+        <header className="fixed top-0 left-0 right-0 z-10 bg-white shadow">
         <nav className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8" aria-label="Top">
-        <div className="flex items-center justify-between w-full py-6 border-b border-indigo-500 lg:border-none">
+        <div className="flex items-center justify-between w-full py-6">
         <div className="flex items-center">
         <Link to="/" className="text-2xl font-bold text-indigo-600">
         SpendSmart

@@ -130,7 +130,7 @@ def handle_requests(current_user):
         except Exception as e:
             return jsonify({"error": str(e)}), 400
     else:
-        requests = SpendRequest.query.all()
+        requests = SpendRequest.query.filter_by(user_id=current_user.id).all()
         return jsonify([r.to_dict() for r in requests])
 
 @app.route('/api/requests/<int:request_id>', methods=['PUT'])
