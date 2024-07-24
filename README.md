@@ -28,7 +28,7 @@ SpendSmart is a modern, AI-enhanced expense management system designed to stream
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/spendsmart.git
+   git clone https://github.com/nomed11/spendsmart.git
    cd spendsmart
    ```
 
